@@ -1,0 +1,7 @@
+order\OrderTest.class
+user\UserLoginTest.class
+order\OrderListTest.class
+user\UserDataUpdateTest.class
+user\UserCreateTest.class
+user\UserSpec.class
+order\OrderSpec.class
