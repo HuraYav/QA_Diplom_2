@@ -1,0 +1,52 @@
+package order;
+
+import user.User;
+import user.UserSpec;
+import io.qameta.allure.internal.shadowed.jackson.core.JsonProcessingException;
+import io.qameta.allure.junit4.DisplayName;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+
+public class OrderListTest {
+    private String userAccessToken;
+    private int numberOfOrders;
+
+    User user = new User();
+
+    @Before
+    public void tearUp() throws Exception {
+        user = User.getRandomUser();
+        userAccessToken = UserSpec.getResponseCreateUser(user, 200).accessToken;
+        numberOfOrders = 4;
+        OrderSpec.createListOfOrders(user, numberOfOrders);
+    }
+
+    @After //удаление учетной записи пользователя
+    public void tearDown() throws Exception {
+        UserSpec.getResponseUserDeleted(userAccessToken, 202);
+    }
+
+    @Test
+    @DisplayName("Тест успешного получения списка заказов авторизованного пользователя")
+    public void successfulGetOfOrdersListFromAuthorizedUserTestOk() throws JsonProcessingException {
+        userAccessToken = UserSpec.getResponseUserAuthorization(user, 200).accessToken;
+        ArrayList<Integer> orderNumber =
+                new ArrayList<>(OrderSpec.getAnOrderListRequestResponse(userAccessToken, 200)
+                        .extract()
+                        .path("orders.number"));
+        assertEquals(numberOfOrders, orderNumber.size());
+    }
+
+    @Test
+    @DisplayName("Тест неуспешного получения списка заказов неавторизованного пользователя")
+    public void failGetOfOrdersListFromUnauthorizedUserTestOk() throws JsonProcessingException {
+        OrderSpec.getAnOrderListRequestResponse("", 401)
+                .body("message", equalTo("You should be authorised"));
+    }
+}
